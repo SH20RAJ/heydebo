@@ -39,8 +39,8 @@ export class DeboOSDatabase extends Dexie {
 
   constructor() {
     super('DeboOSDatabase');
-    this.version(1).stores({
-      timeline: 'id, startTime, status, category',
+    this.version(2).stores({
+      timeline: 'id, startTime, status, category, dayOfWeek',
       subjects: 'id, code, name',
       dsaProblems: 'id, pattern, difficulty, solved',
       dsaMistakes: 'id, date, pattern',
@@ -56,23 +56,35 @@ export class DeboOSDatabase extends Dexie {
 export const db = new DeboOSDatabase();
 
 export async function initializeSeedData() {
-  const timelineCount = await db.timeline.count();
-  if (timelineCount > 0) return; // Already seeded
+  // Clear old seed data if updating schema
+  const versionKey = 'debo_seed_version_v3';
+  const seeded = localStorage.getItem(versionKey);
+  if (!seeded) {
+    await db.timeline.clear();
+    await db.subjects.clear();
+    await db.dsaProblems.clear();
+    await db.calisthenics.clear();
+    await db.supplements.clear();
+    localStorage.setItem(versionKey, 'true');
+  } else {
+    const count = await db.timeline.count();
+    if (count > 0) return;
+  }
 
-  // Seed Timeline
+  // BIT MESRA MONSOON 2026 TIMETABLE SEEDING
   const seedTimeline: TimelineActivity[] = [
+    // --- DAILY MORNING ROUTINE ---
     {
-      id: 't-1',
-      title: 'Wake Up & Cold Hydration + Creatine',
+      id: 't-morning-1',
+      title: 'Wake Up & Cold Hydration + 5g Creatine',
       startTime: '06:00',
       endTime: '06:30',
       category: 'supplement',
       location: 'Hostel Room 304',
       status: 'completed',
       checklist: [
-        { id: 'c1', text: '500ml Filtered Water', completed: true },
-        { id: 'c2', text: '5g Creatine Monohydrate', completed: true },
-        { id: 'c3', text: '10 Min Sunlight Exposure', completed: true }
+        { id: 'c1', text: '500ml Water + 5g Creatine Monohydrate', completed: true },
+        { id: 'c2', text: '10 Min Outdoor Sunlight Cortisol Spike', completed: true }
       ],
       requiredItems: ['Water Bottle', 'Creatine Tub'],
       purpose: 'Cortisol spike activation & ATP cell hydration for CS focus',
@@ -81,17 +93,17 @@ export async function initializeSeedData() {
       priority: 'High'
     },
     {
-      id: 't-2',
-      title: 'Google DSA Deep Work: Monotonic Stack & DP',
+      id: 't-morning-2',
+      title: 'Google L4 DSA Deep Work: Monotonic Stack & DP',
       startTime: '06:30',
       endTime: '08:30',
       category: 'dsa',
       location: 'Central Library (Quiet Zone)',
       status: 'completed',
       checklist: [
-        { id: 'c4', text: 'Solve LC 84: Largest Rectangle in Histogram', completed: true },
-        { id: 'c5', text: 'Solve LC 42: Trapping Rain Water', completed: true },
-        { id: 'c6', text: 'Document off-by-one errors in Mistakes Log', completed: true }
+        { id: 'c3', text: 'Solve LC 84: Largest Rectangle in Histogram', completed: true },
+        { id: 'c4', text: 'Solve LC 42: Trapping Rain Water', completed: true },
+        { id: 'c5', text: 'Log edge case off-by-one errors', completed: true }
       ],
       requiredItems: ['MacBook Pro', 'Noise-Cancelling Headphones', 'Notebook'],
       purpose: 'Google Level 4 DSA problem patterns mastery',
@@ -101,16 +113,16 @@ export async function initializeSeedData() {
       dsaTopic: 'Monotonic Stack'
     },
     {
-      id: 't-3',
+      id: 't-morning-3',
       title: 'Anabolic Breakfast & Espresso Boost',
       startTime: '08:30',
-      endTime: '09:15',
+      endTime: '09:00',
       category: 'meal',
       location: 'Campus Mess',
       status: 'completed',
       checklist: [
-        { id: 'c7', text: '4 Boiled Eggs + Oats', completed: true },
-        { id: 'c8', text: 'Single Shot Espresso', completed: true }
+        { id: 'c6', text: '4 Boiled Eggs + Oats', completed: true },
+        { id: 'c7', text: 'Single Shot Espresso (100mg Caffeine)', completed: true }
       ],
       requiredItems: ['Mess Pass'],
       purpose: 'Protein synthesis & caffeine window optimization',
@@ -118,170 +130,161 @@ export async function initializeSeedData() {
       walkingTimeMins: 4,
       priority: 'High'
     },
+
+    // --- MONDAY CLASSES ---
     {
-      id: 't-4',
-      title: 'DCCN Lecture: Sliding Window Protocols',
-      startTime: '09:30',
-      endTime: '11:00',
+      id: 't-mon-1',
+      title: 'NLP / SE Lecture (PE I)',
+      startTime: '13:30',
+      endTime: '14:20',
       category: 'lecture',
-      location: 'Lecture Hall B-102',
+      location: 'Room G3, Main Building',
       status: 'active',
       checklist: [
-        { id: 'c9', text: 'Review TCP Go-Back-N vs Selective Repeat', completed: false },
-        { id: 'c10', text: 'Take structured Markdown notes in HeyDebo', completed: false }
+        { id: 'c8', text: 'Dr. Aditi Panda (NLP G3) / Dr. S. P. Singh (SE G2)', completed: false }
       ],
-      requiredItems: ['MacBook Pro', 'DCCN Syllabus PDF'],
-      purpose: 'Target 9+ CGPA & 90%+ attendance record',
+      requiredItems: ['MacBook Pro', 'Notebook'],
+      purpose: 'CS24351 / CS24353 PE I Lecture',
       energyReq: 'High',
       walkingTimeMins: 6,
-      priority: 'Critical',
-      subjectCode: 'CS501'
-    },
-    {
-      id: 't-5',
-      title: 'Compiler Design Lecture: Lexical Analysis & Flex',
-      startTime: '11:15',
-      endTime: '12:45',
-      category: 'lecture',
-      location: 'CS Dept Lab 2',
-      status: 'upcoming',
-      checklist: [
-        { id: 'c11', text: 'Implement NFA to DFA conversion code', completed: false },
-        { id: 'c12', text: 'Solve Module 2 PYQ Question #3', completed: false }
-      ],
-      requiredItems: ['MacBook Pro', 'C Compiler Tools'],
-      purpose: 'Syllabus Module 2 mastery for End-Sem Exam',
-      energyReq: 'High',
-      walkingTimeMins: 3,
-      priority: 'Critical',
-      subjectCode: 'CS502'
-    },
-    {
-      id: 't-6',
-      title: 'Lunch & Micro-Walk Hydration',
-      startTime: '13:00',
-      endTime: '14:00',
-      category: 'meal',
-      location: 'Campus Mess',
-      status: 'upcoming',
-      checklist: [
-        { id: 'c13', text: 'Clean High-Protein Meal', completed: false },
-        { id: 'c14', text: 'Drink 750ml Water', completed: false }
-      ],
-      requiredItems: [],
-      purpose: 'Re-fuel glycogen stores for afternoon study',
-      energyReq: 'Low',
-      walkingTimeMins: 4,
-      priority: 'Medium'
-    },
-    {
-      id: 't-7',
-      title: 'AI & Machine Learning: Neural Networks & Backprop',
-      startTime: '14:15',
-      endTime: '16:00',
-      category: 'library',
-      location: 'Central Library (Quiet Zone)',
-      status: 'upcoming',
-      checklist: [
-        { id: 'c15', text: 'Derive Backpropagation Partial Derivatives', completed: false },
-        { id: 'c16', text: 'Code PyTorch Linear Regression from scratch', completed: false }
-      ],
-      requiredItems: ['MacBook Pro', 'iPad Air'],
-      purpose: 'Deep understanding of AI core concepts',
-      energyReq: 'High',
-      walkingTimeMins: 5,
       priority: 'High',
-      subjectCode: 'CS503'
+      subjectCode: 'CS24351',
+      roomNo: 'Room G3 / G2',
+      dayOfWeek: 'Monday'
     },
     {
-      id: 't-8',
-      title: '5-Day Calisthenics: Chest & Front Lever Skills',
+      id: 't-mon-2',
+      title: 'AI Lecture: Artificial Intelligence',
+      startTime: '14:30',
+      endTime: '15:20',
+      category: 'lecture',
+      location: 'Room G3, Main Building',
+      status: 'upcoming',
+      checklist: [
+        { id: 'c9', text: 'Dr. Amrita Sarkar - A* Search & Minimax Trees', completed: false }
+      ],
+      requiredItems: ['MacBook Pro'],
+      purpose: 'CS24307 AI Theory Lecture',
+      energyReq: 'High',
+      walkingTimeMins: 2,
+      priority: 'Critical',
+      subjectCode: 'CS24307',
+      roomNo: 'Room G3',
+      dayOfWeek: 'Monday'
+    },
+    {
+      id: 't-mon-3',
+      title: 'DMCT Lecture: Data Mining & Discrete Math',
+      startTime: '15:30',
+      endTime: '16:20',
+      category: 'lecture',
+      location: 'Room G3, Main Building',
+      status: 'upcoming',
+      checklist: [
+        { id: 'c10', text: 'Dr. Debjani Mustafi - Graph Theory & Mining', completed: false }
+      ],
+      requiredItems: ['Notebook'],
+      purpose: 'CS24303 DMCT Theory Lecture',
+      energyReq: 'High',
+      walkingTimeMins: 0,
+      priority: 'High',
+      subjectCode: 'CS24303',
+      roomNo: 'Room G3',
+      dayOfWeek: 'Monday'
+    },
+    {
+      id: 't-mon-4',
+      title: 'DCCN Lecture: Data Communication & Networks',
       startTime: '16:30',
-      endTime: '18:00',
+      endTime: '17:20',
+      category: 'lecture',
+      location: 'Room G3, Main Building',
+      status: 'upcoming',
+      checklist: [
+        { id: 'c11', text: 'Dr. Prashant Pranav - TCP Congestion Control & Sliding Window', completed: false }
+      ],
+      requiredItems: ['MacBook Pro'],
+      purpose: 'CS24305 DCCN Theory Lecture',
+      energyReq: 'High',
+      walkingTimeMins: 0,
+      priority: 'Critical',
+      subjectCode: 'CS24305',
+      roomNo: 'Room G3',
+      dayOfWeek: 'Monday'
+    },
+
+    // --- EVENING CALISTHENICS & WIND-DOWN ---
+    {
+      id: 't-eve-1',
+      title: '5-Day Calisthenics Split: Chest & Front Lever',
+      startTime: '17:30',
+      endTime: '19:00',
       category: 'workout',
       location: 'Outdoor Calisthenics Park',
       status: 'upcoming',
       checklist: [
-        { id: 'c17', text: 'Weighted Dips: 4 sets x 10 reps (+20kg)', completed: false },
-        { id: 'c18', text: 'Tuck Front Lever Holds: 5 sets x 15s', completed: false },
-        { id: 'c19', text: 'Pseudo Planche Push-ups: 4 sets x 12', completed: false },
-        { id: 'c20', text: 'Whey Protein Shake (30g)', completed: false }
+        { id: 'c12', text: 'Weighted Dips: 4 sets x 10 (+20kg)', completed: false },
+        { id: 'c13', text: 'Tuck Front Lever Hold: 5 sets x 15s', completed: false },
+        { id: 'c14', text: 'Pseudo Planche Push-ups: 4 sets x 12', completed: false },
+        { id: 'c15', text: '30g Whey Protein Shake', completed: false }
       ],
-      requiredItems: ['Gym Towel', 'Resistance Bands', 'Chalk', 'Water Bottle'],
-      purpose: 'Build aesthetic athletic physique & leverage strength',
+      requiredItems: ['Chalk', 'Resistance Bands', 'Water Bottle'],
+      purpose: 'Build aesthetic V-taper physique & leverage strength',
       energyReq: 'Peak',
-      walkingTimeMins: 7,
+      walkingTimeMins: 6,
       priority: 'High'
     },
     {
-      id: 't-9',
-      title: 'Google Contest Practice & Speed LeetCode',
-      startTime: '18:30',
-      endTime: '20:00',
-      category: 'dsa',
-      location: 'Hostel Room 304',
-      status: 'upcoming',
-      checklist: [
-        { id: 'c21', text: 'Timed LeetCode Medium #200 (Island Count)', completed: false },
-        { id: 'c22', text: 'Timed LeetCode Medium #207 (Course Schedule)', completed: false }
-      ],
-      requiredItems: ['MacBook Pro'],
-      purpose: 'Interview speed & pattern recognition under clock pressure',
-      energyReq: 'High',
-      walkingTimeMins: 0,
-      priority: 'High'
-    },
-    {
-      id: 't-10',
+      id: 't-eve-2',
       title: 'Dinner & Campus Relaxation Walk',
-      startTime: '20:00',
-      endTime: '21:00',
+      startTime: '19:30',
+      endTime: '20:30',
       category: 'meal',
       location: 'Campus Lake Walkway',
       status: 'upcoming',
       checklist: [
-        { id: 'c23', text: 'Light Dinner', completed: false },
-        { id: 'c24', text: '20 Min Walk without screens', completed: false }
+        { id: 'c16', text: 'Clean High-Protein Dinner at Mess', completed: false },
+        { id: 'c17', text: '20 Min Walk without screens', completed: false }
       ],
       requiredItems: [],
-      purpose: 'Lower heart rate & mental decompression',
+      purpose: 'Parasympathetic recovery & glycogen replenishment',
       energyReq: 'Low',
-      walkingTimeMins: 10,
-      priority: 'Low'
+      walkingTimeMins: 8,
+      priority: 'Medium'
     },
     {
-      id: 't-11',
-      title: 'Spaced Revision & Flashcard Review',
-      startTime: '21:15',
+      id: 't-eve-3',
+      title: 'Spaced Revision & Anki Flashcard Review',
+      startTime: '20:45',
       endTime: '22:15',
       category: 'subject',
       location: 'Hostel Room 304',
       status: 'upcoming',
       checklist: [
-        { id: 'c25', text: 'Review 20 DCCN Anki Flashcards', completed: false },
-        { id: 'c26', text: 'Review DMCT Graph Theory theorems', completed: false }
+        { id: 'c18', text: 'Review 20 DCCN & CD Anki Flashcards', completed: false },
+        { id: 'c19', text: 'Review DMCT Proof Formulas', completed: false }
       ],
       requiredItems: ['MacBook Pro'],
-      purpose: 'Long-term retention engine',
+      purpose: 'Long-term retention & End-Sem prep',
       energyReq: 'Medium',
       walkingTimeMins: 0,
       priority: 'High'
     },
     {
-      id: 't-12',
-      title: 'Sleep Wind-Down & Blue Light Block',
+      id: 't-eve-4',
+      title: 'Sleep Recovery Protocol & Magnesium',
       startTime: '22:30',
       endTime: '23:00',
       category: 'sleep',
       location: 'Hostel Room 304',
       status: 'upcoming',
       checklist: [
-        { id: 'c27', text: 'Magnesium Glycinate 400mg', completed: false },
-        { id: 'c28', text: 'Journal 3 wins of today', completed: false },
-        { id: 'c29', text: 'Set 06:00 AM Alarm', completed: false }
+        { id: 'c20', text: '400mg Magnesium Glycinate', completed: false },
+        { id: 'c21', text: 'Blue Light Glasses & Journaling', completed: false },
+        { id: 'c22', text: 'Alarm set for 06:00 AM', completed: false }
       ],
       requiredItems: [],
-      purpose: 'Deep REM & Slow Wave sleep recovery',
+      purpose: '7.5 hours Deep REM & slow-wave sleep recovery',
       energyReq: 'Low',
       walkingTimeMins: 0,
       priority: 'Critical'
@@ -290,19 +293,26 @@ export async function initializeSeedData() {
 
   await db.timeline.bulkAdd(seedTimeline);
 
-  // Seed Subjects
+  // BIT MESRA 5TH SEMESTER CSE SUBJECTS
   const seedSubjects: Subject[] = [
     {
-      id: 'subj-1',
-      code: 'CS501',
+      id: 'subj-dccn',
+      code: 'CS24305',
       name: 'Data Communication & Computer Networks (DCCN)',
-      professor: 'Dr. A. K. Sharma',
+      credits: 3.0,
+      professor: 'Dr. Prashant Pranav',
+      roomNo: 'Room G3 / Room 220',
       color: '#00F0FF',
       attendance: 88,
       attendedLectures: 22,
       totalLectures: 25,
       targetGrade: 'A+',
       examDate: '2026-09-15',
+      labCourseCode: 'CS24306',
+      labName: 'DCCN Lab',
+      labCredits: 1.5,
+      labRoomNo: 'Lab 4',
+      labProfessor: 'Dr. Prashant Pranav, Dr. Sumit Srivastava',
       modules: [
         {
           id: 'm1',
@@ -310,7 +320,7 @@ export async function initializeSeedData() {
           title: 'Physical & Data Link Layer',
           topics: [
             { id: 't1', title: 'OSI vs TCP/IP Reference Models', completed: true },
-            { id: 't2', title: 'Framing, Error Detection & CRC 32', completed: true },
+            { id: 't2', title: 'Framing, Error Detection & CRC-32', completed: true },
             { id: 't3', title: 'Sliding Window: Go-Back-N & Selective Repeat', completed: false, isWeakTopic: true }
           ]
         },
@@ -326,29 +336,36 @@ export async function initializeSeedData() {
         {
           id: 'm3',
           moduleNumber: 3,
-          title: 'Transport Layer & TCP',
+          title: 'Transport Layer & TCP Congestion Control',
           topics: [
             { id: 't6', title: 'TCP 3-Way Handshake & Connection Teardown', completed: true },
-            { id: 't7', title: 'TCP Congestion Control (Slow Start, Tahoe, Reno)', completed: false, isWeakTopic: true }
+            { id: 't7', title: 'TCP Slow Start, Fast Retransmit, Fast Recovery', completed: false, isWeakTopic: true }
           ]
         }
       ],
       pyqs: [
         { id: 'p1', year: '2025', question: 'Derive efficiency formula for Selective Repeat ARQ with window size N.', difficulty: 'Hard', marks: 10, solved: false },
-        { id: 'p2', year: '2024', question: 'Differentiate between Leaky Bucket and Token Bucket traffic shaping.', difficulty: 'Medium', marks: 5, solved: true }
+        { id: 'p2', year: '2024', question: 'Differentiate between Leaky Bucket and Token Bucket traffic shaping algorithms.', difficulty: 'Medium', marks: 5, solved: true }
       ]
     },
     {
-      id: 'subj-2',
-      code: 'CS502',
-      name: 'Compiler Design',
-      professor: 'Prof. R. Mehta',
+      id: 'subj-cd',
+      code: 'CS24301',
+      name: 'Compiler Design (CD)',
+      credits: 3.0,
+      professor: 'Dr. I. Mukherjee',
+      roomNo: 'Room 220 / Room 214',
       color: '#FF2D55',
       attendance: 92,
       attendedLectures: 23,
       totalLectures: 25,
       targetGrade: 'A+',
       examDate: '2026-09-18',
+      labCourseCode: 'CS24302',
+      labName: 'Compiler Design Lab',
+      labCredits: 1.5,
+      labRoomNo: 'Lab 1',
+      labProfessor: 'Dr. I. Mukherjee',
       modules: [
         {
           id: 'm4',
@@ -366,16 +383,49 @@ export async function initializeSeedData() {
       ]
     },
     {
-      id: 'subj-3',
-      code: 'CS503',
-      name: 'Artificial Intelligence & Machine Learning',
-      professor: 'Dr. S. Roy',
+      id: 'subj-dmct',
+      code: 'CS24303',
+      name: 'Data Mining Concepts & Techniques (DMCT)',
+      credits: 3.0,
+      professor: 'Dr. Debjani Mustafi',
+      roomNo: 'Room G3 / Room 220',
+      color: '#BF5AF2',
+      attendance: 90,
+      attendedLectures: 18,
+      totalLectures: 20,
+      targetGrade: 'A+',
+      examDate: '2026-09-25',
+      modules: [
+        {
+          id: 'm6',
+          moduleNumber: 1,
+          title: 'Data Preprocessing & Association Rules',
+          topics: [
+            { id: 't13', title: 'Apriori Algorithm & FP-Growth Trees', completed: true },
+            { id: 't14', title: 'Clustering: K-Means & DBSCAN', completed: false }
+          ]
+        }
+      ],
+      pyqs: []
+    },
+    {
+      id: 'subj-ai',
+      code: 'CS24307',
+      name: 'Artificial Intelligence (AI)',
+      credits: 3.0,
+      professor: 'Dr. Amrita Sarkar',
+      roomNo: 'Room G3 / Room 220 / Room 214',
       color: '#30D158',
       attendance: 85,
       attendedLectures: 17,
       totalLectures: 20,
       targetGrade: 'A+',
       examDate: '2026-09-22',
+      labCourseCode: 'CS24308',
+      labName: 'Artificial Intelligence Lab',
+      labCredits: 1.5,
+      labRoomNo: 'Lab 4',
+      labProfessor: 'Dr. Amrita Sarkar',
       modules: [
         {
           id: 'm5',
@@ -392,24 +442,12 @@ export async function initializeSeedData() {
       ]
     },
     {
-      id: 'subj-4',
-      code: 'CS504',
-      name: 'Discrete Math & Complexity Theory (DMCT)',
-      professor: 'Prof. K. Verma',
-      color: '#BF5AF2',
-      attendance: 90,
-      attendedLectures: 18,
-      totalLectures: 20,
-      targetGrade: 'A+',
-      examDate: '2026-09-25',
-      modules: [],
-      pyqs: []
-    },
-    {
-      id: 'subj-5',
-      code: 'CS505',
-      name: 'Natural Language Processing (NLP)',
-      professor: 'Dr. V. Kapoor',
+      id: 'subj-nlp',
+      code: 'CS24351',
+      name: 'Natural Language Processing (NLP) [PE I]',
+      credits: 3.0,
+      professor: 'Dr. Aditi Panda',
+      roomNo: 'Room G3 / Room 214 / Room 220',
       color: '#FFD60A',
       attendance: 84,
       attendedLectures: 16,
@@ -420,10 +458,12 @@ export async function initializeSeedData() {
       pyqs: []
     },
     {
-      id: 'subj-6',
-      code: 'CS506',
-      name: 'Software Engineering & System Architecture',
-      professor: 'Prof. N. Sen',
+      id: 'subj-se',
+      code: 'CS24353',
+      name: 'Software Engineering (SE) [PE I]',
+      credits: 3.0,
+      professor: 'Dr. S. P. Singh',
+      roomNo: 'Room G2 / Room 220',
       color: '#64D2FF',
       attendance: 95,
       attendedLectures: 19,
@@ -454,24 +494,15 @@ export async function initializeSeedData() {
 
   // Seed Calisthenics Exercises
   const seedCalisthenics: CalisthenicsExercise[] = [
-    // Monday: Chest & Front Lever
     { id: 'cal-1', name: 'Weighted Dips (+20kg)', day: 'Monday', targetArea: 'Lower Chest & Triceps', sets: 4, reps: '8-10', restSeconds: 120, notes: 'Full depth, lockout at top', visualCue: 'dips', completedToday: false },
     { id: 'cal-2', name: 'Tuck Front Lever Hold', day: 'Monday', targetArea: 'Lats & Core Stability', sets: 5, reps: '15s Hold', restSeconds: 90, notes: 'Depressed scapula, straight arms', visualCue: 'lever', completedToday: false },
     { id: 'cal-3', name: 'Pseudo Planche Push-ups', day: 'Monday', targetArea: 'Upper Chest & Shoulders', sets: 4, reps: '10-12', restSeconds: 90, notes: 'Maximum forward lean', visualCue: 'pushup', completedToday: false },
-
-    // Tuesday: Arms & Handstand
     { id: 'cal-4', name: 'Wall Handstand Push-ups', day: 'Tuesday', targetArea: 'Deltoids & Upper Triceps', sets: 4, reps: '6-8', restSeconds: 120, notes: 'Hollow body posture', visualCue: 'handstand', completedToday: false },
     { id: 'cal-5', name: 'Chin-ups with Pause', day: 'Tuesday', targetArea: 'Biceps & Upper Back', sets: 4, reps: '10', restSeconds: 90, notes: '2s chin over bar hold', visualCue: 'chinup', completedToday: false },
-
-    // Wednesday: Legs
     { id: 'cal-6', name: 'Pistol Squats (Single Leg)', day: 'Wednesday', targetArea: 'Quads & Glutes', sets: 4, reps: '8 each leg', restSeconds: 90, notes: 'Full depth knee tracking', visualCue: 'squat', completedToday: false },
     { id: 'cal-7', name: 'Explosive Jump Squats', day: 'Wednesday', targetArea: 'Explosive Fast-Twitch Fibers', sets: 4, reps: '15', restSeconds: 60, notes: 'Maximum vertical height', visualCue: 'jumpsquat', completedToday: false },
-
-    // Thursday: Back & Muscle-Up
     { id: 'cal-8', name: 'Explosive High Pull-ups', day: 'Thursday', targetArea: 'Lats & Muscle-Up Transition', sets: 5, reps: '5 reps (Bar to Chest)', restSeconds: 120, notes: 'Fast pull to sternum', visualCue: 'pullup', completedToday: false },
     { id: 'cal-9', name: 'Clean Muscle-Ups', day: 'Thursday', targetArea: 'Explosive Upper Body', sets: 4, reps: '3-5', restSeconds: 150, notes: 'No kip, smooth transition', visualCue: 'muscleup', completedToday: false },
-
-    // Friday: Abs & Skills
     { id: 'cal-10', name: 'Hanging Leg Raises', day: 'Friday', targetArea: 'Rectus Abdominis', sets: 4, reps: '12-15', restSeconds: 60, notes: 'Toes to bar, zero momentum', visualCue: 'legraise', completedToday: false },
     { id: 'cal-11', name: 'Dragon Flags', day: 'Friday', targetArea: 'Entire Core & Lat Compression', sets: 4, reps: '6-8', restSeconds: 90, notes: 'Straight body line descent', visualCue: 'dragonflag', completedToday: false }
   ];
@@ -483,7 +514,7 @@ export async function initializeSeedData() {
     { id: 'sup-1', name: 'Morning Filtered Water', timing: '06:00 AM', dose: '500ml', category: 'hydration', completedToday: true, purpose: 'Rehydrate after 7.5h sleep' },
     { id: 'sup-2', name: 'Creatine Monohydrate', timing: '06:15 AM', dose: '5g', category: 'creatine', completedToday: true, purpose: 'Brain & Muscle ATP saturation' },
     { id: 'sup-3', name: 'Pre-Study Espresso', timing: '08:30 AM', dose: '100mg Caffeine', category: 'caffeine', completedToday: true, purpose: 'Adenosine receptor blockade' },
-    { id: 'sup-4', name: 'Post-Workout Whey Protein', timing: '18:00 PM', dose: '30g Protein', category: 'protein', completedToday: false, purpose: 'Muscle muscle protein synthesis' },
+    { id: 'sup-4', name: 'Post-Workout Whey Protein', timing: '18:00 PM', dose: '30g Protein', category: 'protein', completedToday: false, purpose: 'Muscle protein synthesis' },
     { id: 'sup-5', name: 'Daily Water Goal Target', timing: 'All Day', dose: '3,500ml Total', category: 'hydration', completedToday: false, purpose: 'Optimal cognitive performance' }
   ];
 

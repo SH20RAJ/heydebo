@@ -6,14 +6,19 @@ export type ActivityCategory =
   | 'supplement' 
   | 'rest' 
   | 'lecture' 
+  | 'lab'
   | 'library' 
   | 'sleep';
 
 export type ActivityLocation = 
   | 'Hostel Room 304' 
   | 'Central Library (Quiet Zone)' 
-  | 'CS Dept Lab 2' 
-  | 'Lecture Hall B-102' 
+  | 'Room 220, CSE Dept'
+  | 'Room 214, CSE Dept'
+  | 'Room G3, Main Building'
+  | 'Room G2, Main Building'
+  | 'Lab 1 (CD Lab), CSE Dept'
+  | 'Lab 4 (AI/DCCN Lab), CSE Dept'
   | 'Campus Mess' 
   | 'Outdoor Calisthenics Park' 
   | 'Campus Lake Walkway';
@@ -41,7 +46,9 @@ export interface TimelineActivity {
   walkingTimeMins: number;
   priority: 'Low' | 'Medium' | 'High' | 'Critical';
   subjectCode?: string;
+  roomNo?: string;
   dsaTopic?: string;
+  dayOfWeek?: 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
 }
 
 export interface SyllabusTopic {
@@ -71,7 +78,9 @@ export interface Subject {
   id: string;
   code: string;
   name: string;
+  credits: number;
   professor: string;
+  roomNo?: string;
   color: string;
   modules: SyllabusModule[];
   pyqs: PYQItem[];
@@ -80,6 +89,11 @@ export interface Subject {
   attendance: number; // e.g. 88
   totalLectures: number;
   attendedLectures: number;
+  labCourseCode?: string;
+  labName?: string;
+  labCredits?: number;
+  labRoomNo?: string;
+  labProfessor?: string;
 }
 
 export type DSADifficulty = 'Easy' | 'Medium' | 'Hard';
