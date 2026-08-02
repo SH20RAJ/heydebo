@@ -82,6 +82,9 @@ export interface Subject {
   professor: string;
   roomNo?: string;
   color: string;
+  completionPercent?: number;
+  remainingLectures?: number;
+  reviewDate?: string;
   modules: SyllabusModule[];
   pyqs: PYQItem[];
   examDate: string; // YYYY-MM-DD
