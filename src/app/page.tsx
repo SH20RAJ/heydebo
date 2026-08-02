@@ -1,52 +1,252 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Compass, 
+  Clock, 
+  Code2, 
+  Dumbbell, 
+  BookOpen, 
+  Pill, 
+  Bot, 
+  Sparkles, 
+  AlertTriangle,
+  Flame,
+  Plus
+} from 'lucide-react';
+import { db, initializeSeedData } from '@/lib/db';
+import { calculateCurrentDecision } from '@/lib/decision-engine';
+import { DynamicIsland } from '@/components/ui/dynamic-island';
+import { WatchDashboard } from '@/components/dashboard/watch-dashboard';
+import { VerticalTimeline } from '@/components/timeline/vertical-timeline';
+import { DSAView } from '@/components/dsa/dsa-view';
+import { CalisthenicsView } from '@/components/gym/calisthenics-view';
+import { SubjectsView } from '@/components/subjects/subjects-view';
+import { HealthView } from '@/components/health/health-view';
+import { DeboAIChat } from '@/components/ai/debo-ai-chat';
+import { RecoveryModal } from '@/components/modals/recovery-modal';
+import { QuickCaptureModal } from '@/components/modals/quick-capture-modal';
 
 export default function Home() {
-	return (
-		<div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-			<main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-				<Image className="dark:invert" src="/next.svg" alt="Next.js logo" width={180} height={38} priority />
-				<ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-					<li className="mb-2 tracking-[-.01em]">
-						Get started by editing{" "}
-						<code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-							src/app/page.tsx
-						</code>
-						.
-					</li>
-					<li className="tracking-[-.01em]">Save and see your changes instantly.</li>
-				</ol>
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'timeline' | 'dsa' | 'gym' | 'subjects' | 'health' | 'ai'>('dashboard');
+  const [isRecoveryOpen, setIsRecoveryOpen] = useState(false);
+  const [isQuickCaptureOpen, setIsQuickCaptureOpen] = useState(false);
 
-				<div className="flex gap-4 items-center flex-col sm:flex-row">
-					<a
-						className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-						href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						Read our docs
-					</a>
-				</div>
-			</main>
-			<footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-				<a
-					className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-					href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-					target="_blank"
-					rel="noopener noreferrer"
-				>
-					<Image aria-hidden src="/file.svg" alt="File icon" width={16} height={16} />
-					Learn
-				</a>
-				<a
-					className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-					href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-					target="_blank"
-					rel="noopener noreferrer"
-				>
-					<Image aria-hidden src="/globe.svg" alt="Globe icon" width={16} height={16} />
-					Go to nextjs.org →
-				</a>
-			</footer>
-		</div>
-	);
+  // Initialize Dexie Seed Data on mount
+  useEffect(() => {
+    initializeSeedData().catch(console.error);
+  }, []);
+
+  // Live Queries from IndexedDB
+  const timeline = useLiveQuery(() => db.timeline.toArray()) || [];
+  const subjects = useLiveQuery(() => db.subjects.toArray()) || [];
+  const dsaProblems = useLiveQuery(() => db.dsaProblems.toArray()) || [];
+  const calisthenics = useLiveQuery(() => db.calisthenics.toArray()) || [];
+  const supplements = useLiveQuery(() => db.supplements.toArray()) || [];
+
+  // Compute Decision State
+  const decision = calculateCurrentDecision(timeline);
+
+  // Handlers for Timeline Checklist Toggle
+  const handleToggleChecklist = async (activityId: string, itemIdx: number) => {
+    const item = await db.timeline.get(activityId);
+    if (!item) return;
+    const updatedChecklist = [...item.checklist];
+    updatedChecklist[itemIdx].completed = !updatedChecklist[itemIdx].completed;
+    await db.timeline.update(activityId, { checklist: updatedChecklist });
+  };
+
+  const handleRescheduleMissed = async (activityId: string) => {
+    await db.timeline.update(activityId, { status: 'upcoming', startTime: '19:00', endTime: '20:00' });
+  };
+
+  // Handler for DSA Solve
+  const handleToggleSolveDSA = async (id: string) => {
+    const prob = await db.dsaProblems.get(id);
+    if (!prob) return;
+    await db.dsaProblems.update(id, { solved: !prob.solved, solvedDate: new Date().toISOString().split('T')[0] });
+  };
+
+  // Handler for Calisthenics Exercise Toggle
+  const handleToggleCalisthenics = async (id: string) => {
+    const ex = await db.calisthenics.get(id);
+    if (!ex) return;
+    await db.calisthenics.update(id, { completedToday: !ex.completedToday });
+  };
+
+  // Handler for Subjects Topic Toggle
+  const handleToggleSubjectTopic = async (subjId: string, modId: string, topicId: string) => {
+    const subj = await db.subjects.get(subjId);
+    if (!subj) return;
+
+    const updatedModules = subj.modules.map(mod => {
+      if (mod.id !== modId) return mod;
+      return {
+        ...mod,
+        topics: mod.topics.map(top => {
+          if (top.id !== topicId) return top;
+          return { ...top, completed: !top.completed };
+        })
+      };
+    });
+
+    await db.subjects.update(subjId, { modules: updatedModules });
+  };
+
+  const handleTogglePYQ = async (subjId: string, pyqId: string) => {
+    const subj = await db.subjects.get(subjId);
+    if (!subj) return;
+
+    const updatedPYQs = subj.pyqs.map(pyq => {
+      if (pyq.id !== pyqId) return pyq;
+      return { ...pyq, solved: !pyq.solved };
+    });
+
+    await db.subjects.update(subjId, { pyqs: updatedPYQs });
+  };
+
+  // Handler for Supplement Toggle
+  const handleToggleSupplement = async (id: string) => {
+    const sup = await db.supplements.get(id);
+    if (!sup) return;
+    await db.supplements.update(id, { completedToday: !sup.completedToday });
+  };
+
+  // Save Note Handler
+  const handleSaveNote = async (title: string, content: string) => {
+    await db.notes.add({
+      id: Date.now().toString(),
+      title,
+      content,
+      category: 'quick-capture',
+      updatedAt: new Date().toISOString()
+    });
+  };
+
+  // AI Recovery Handler
+  const handleConfirmRecovery = async () => {
+    // Reset missed timeline items to upcoming
+    const allTimeline = await db.timeline.toArray();
+    for (const item of allTimeline) {
+      if (item.status === 'missed') {
+        await db.timeline.update(item.id, { status: 'upcoming' });
+      }
+    }
+  };
+
+  return (
+    <main className="min-h-screen bg-[#090a0f] text-white selection:bg-cyan-500 selection:text-black font-sans antialiased relative">
+      {/* Background ambient glow circles */}
+      <div className="fixed top-0 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="fixed bottom-0 right-1/4 w-96 h-96 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
+
+      {/* Omnipresent Dynamic Island Header */}
+      <DynamicIsland
+        decision={decision}
+        onOpenRecovery={() => setIsRecoveryOpen(true)}
+        onOpenQuickCapture={() => setIsQuickCaptureOpen(true)}
+      />
+
+      {/* Main Container */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        
+        {/* Render Tab Views */}
+        {activeTab === 'dashboard' && (
+          <WatchDashboard
+            decision={decision}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+            onOpenRecovery={() => setIsRecoveryOpen(true)}
+          />
+        )}
+
+        {activeTab === 'timeline' && (
+          <VerticalTimeline
+            timeline={timeline}
+            onToggleChecklist={handleToggleChecklist}
+            onRescheduleMissed={handleRescheduleMissed}
+          />
+        )}
+
+        {activeTab === 'dsa' && (
+          <DSAView
+            problems={dsaProblems}
+            onToggleSolve={handleToggleSolveDSA}
+          />
+        )}
+
+        {activeTab === 'gym' && (
+          <CalisthenicsView
+            exercises={calisthenics}
+            onToggleExercise={handleToggleCalisthenics}
+          />
+        )}
+
+        {activeTab === 'subjects' && (
+          <SubjectsView
+            subjects={subjects}
+            onToggleTopic={handleToggleSubjectTopic}
+            onTogglePYQ={handleTogglePYQ}
+          />
+        )}
+
+        {activeTab === 'health' && (
+          <HealthView
+            supplements={supplements}
+            onToggleSupplement={handleToggleSupplement}
+          />
+        )}
+
+        {activeTab === 'ai' && (
+          <DeboAIChat decision={decision} />
+        )}
+      </div>
+
+      {/* Glassmorphic Bottom Floating Navigation Bar */}
+      <div className="fixed bottom-4 left-0 right-0 z-40 flex justify-center px-4">
+        <div className="bg-black/85 backdrop-blur-2xl border border-white/15 px-3 py-2 rounded-full shadow-2xl flex items-center space-x-1 sm:space-x-2">
+          {[
+            { id: 'dashboard', label: 'Dashboard', icon: Compass },
+            { id: 'timeline', label: 'Timeline', icon: Clock },
+            { id: 'dsa', label: 'Google DSA', icon: Code2 },
+            { id: 'gym', label: 'Calisthenics', icon: Dumbbell },
+            { id: 'subjects', label: 'Subjects', icon: BookOpen },
+            { id: 'health', label: 'Health', icon: Pill },
+            { id: 'ai', label: 'AI Coach', icon: Bot },
+          ].map(tab => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`flex items-center space-x-1.5 px-3 py-2 rounded-full text-xs font-semibold transition ${
+                  isActive
+                    ? 'bg-cyan-500 text-black shadow-lg shadow-cyan-500/30'
+                    : 'text-zinc-400 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                <span className="hidden md:inline">{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Modals */}
+      <RecoveryModal
+        isOpen={isRecoveryOpen}
+        onClose={() => setIsRecoveryOpen(false)}
+        onConfirmRecovery={handleConfirmRecovery}
+      />
+
+      <QuickCaptureModal
+        isOpen={isQuickCaptureOpen}
+        onClose={() => setIsQuickCaptureOpen(false)}
+        onSaveNote={handleSaveNote}
+      />
+    </main>
+  );
 }
