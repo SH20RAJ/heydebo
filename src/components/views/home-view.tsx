@@ -9,7 +9,7 @@ import { BottomDock } from '@/components/navigation/bottom-dock';
 import { CommandPalette } from '@/components/command/command-palette';
 import { RecoveryModal } from '@/components/modals/recovery-modal';
 
-export default function Home() {
+export function HomeView() {
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [isRecoveryOpen, setIsRecoveryOpen] = useState(false);
 
@@ -30,22 +30,20 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-background text-foreground selection:bg-primary font-sans antialiased relative">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
-        <MissionControl
-          decision={decision}
-          onNavigateTab={(tab) => {
-            if (tab === 'today') window.location.href = '/today';
-            else if (tab === 'timeline') window.location.href = '/timeline';
-            else if (tab === 'subjects') window.location.href = '/subjects';
-            else if (tab === 'dsa') window.location.href = '/dsa';
-            else if (tab === 'health') window.location.href = '/health';
-            else if (tab === 'settings') window.location.href = '/settings';
-            else if (tab === 'tools') window.location.href = '/tools';
-          }}
-          onOpenRecovery={() => setIsRecoveryOpen(true)}
-        />
-      </div>
+    <div className="relative">
+      <MissionControl
+        decision={decision}
+        onNavigateTab={(tab) => {
+          if (tab === 'today') window.location.href = '/today';
+          else if (tab === 'timeline') window.location.href = '/timeline';
+          else if (tab === 'subjects') window.location.href = '/subjects';
+          else if (tab === 'dsa') window.location.href = '/dsa';
+          else if (tab === 'health') window.location.href = '/health';
+          else if (tab === 'settings') window.location.href = '/settings';
+          else if (tab === 'tools') window.location.href = '/tools';
+        }}
+        onOpenRecovery={() => setIsRecoveryOpen(true)}
+      />
 
       <BottomDock
         activeTab="home"
@@ -84,6 +82,6 @@ export default function Home() {
         onClose={() => setIsRecoveryOpen(false)}
         onConfirmRecovery={handleConfirmRecovery}
       />
-    </main>
+    </div>
   );
 }
